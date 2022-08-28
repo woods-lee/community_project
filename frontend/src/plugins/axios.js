@@ -1,10 +1,10 @@
 import axios from "axios";
 
-const instance = axios.create({
+const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
   timeout: 3000,
 });
-export default instance;
+export default axiosInstance;

@@ -1,9 +1,9 @@
-import instance from "./axios";
+import axiosInstance from "./axios";
 import { useCookies } from "vue3-cookies";
 const { cookies } = useCookies();
 
 const setup = (store) => {
-  instance.interceptors.request.use(
+  axiosInstance.interceptors.request.use(
     async (config) => {
       if (import.meta.env.VITE_IS_LOGIN === "Y") {
         config.headers["x-access-token"] = cookies.get("accessToken");
@@ -18,7 +18,7 @@ const setup = (store) => {
       return Promise.reject(error);
     }
   );
-  instance.interceptors.response.use(
+  axiosInstance.interceptors.response.use(
     (res) => {
       return res;
     },
@@ -35,7 +35,7 @@ const setup = (store) => {
             // accessToken이 null일 경우 419코드를 받고 토큰 재생성 요청
             try {
               await store.dispatch("auth/refreshToken");
-              return instance(errorAPI);
+              return axiosInstance(errorAPI);
             } catch (err) {
               // console.error('err);
               return Promise.reject(err);

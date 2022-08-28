@@ -1,36 +1,74 @@
 import { defineStore } from "pinia";
 
-import { fetchWrapper, router } from "@/helpers";
-
-const baseUrl = `${import.meta.env.VITE_API_URL}/users`;
-
 export const useAuthStore = defineStore({
   id: "auth",
   state: () => ({
-    // initialize state from local storage to enable user to stay logged in
-    user: JSON.parse(localStorage.getItem("user")),
-    returnUrl: null,
+    loggedIn: 0,
   }),
+  getters: {
+    loggedIn: (state) => state.loggedIn,
+  },
   actions: {
-    async login(username, password) {
-      const user = await fetchWrapper.post(`${baseUrl}/authenticate`, {
-        username,
-        password,
-      });
-
-      // update pinia state
-      this.user = user;
-
-      // store user details and jwt in local storage to keep user logged in between page refreshes
-      localStorage.setItem("user", JSON.stringify(user));
-
-      // redirect to previous url or default to home page
-      router.push(this.returnUrl || "/");
+    increment() {
+      this.counter++;
     },
-    logout() {
-      this.user = null;
-      localStorage.removeItem("user");
-      router.push("/login");
+    login(params) {
+        return new Promise( async(resolve, reject) => {
+            try {
+              const rs = await axios.post('/api/auth/login', params);
+              if (rs.data.ok) {
+                const access = rs.data.result.accessToken;
+                const refresh = rs.data.result.refreshToken;
+                cookies.set('accessToken', access, import.meta.env.VITE_ACCESS_TIME);
+                cookies.set('refreshToken', refresh, import.meta.env.VITE_REFRESH_TIME);                
+                this.loggedIn = true;
+              }
+              resolve(rs.data.msg);
+            } catch (err) {
+              console.error(err);
+              reject(err);
+            }
+          })
     },
+    verifyToken() {
+        return new Promise( async(resolve, reject) => {
+            try {
+              const rs = await axios.post('/api/auth/accessTokenCheck');
+              if(rs.data.ok) {
+                resolve(true);
+              } else {
+                console.error(rs.data.msg);
+                alert(rs.data.result);
+                this.loggedIn = false;
+                resolve(false);
+              }
+            } catch (err) {
+              console.error(err);
+              reject(err);
+            }
+          })
+    },
+    refreshToken() {
+        return new Promise( async(resolve, reject) => {
+            try {
+              const rs = await axios.post('/api/auth/refreshToken');
+              if(rs.data.ok) {
+                const access = rs.data.result.accessToken;
+                const refresh = rs.data.result.refreshToken;
+                cookies.set('accessToken', access, import.meta.env.VITE_ACCESS_TIME);
+                cookies.set('refreshToken', refresh, import.meta.env.VITE_REFRESH_TIME);
+                this.loggedIn = true;
+                resolve(true);
+              } else {
+                console.error(rs.data.msg);
+                this.loggedIn = false;
+                resolve(false);
+              }
+            } catch (err) {
+              console.error(err);
+              reject(err);
+            }
+          })
+    }
   },
 });
