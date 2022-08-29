@@ -10,7 +10,7 @@ import axiosInterceptor from "./plugins/interceptor";
 axiosInterceptor(store);
 
 const root = createApp(App);
-root.use(router);
+root.use(router(store));
 root.use(vuetify);
 
 root.config.globalProperties.axios = axios;
